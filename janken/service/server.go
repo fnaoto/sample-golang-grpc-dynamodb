@@ -9,12 +9,14 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	db "janken/db"
 	pb "janken/pb"
 	pkg "janken/pkg"
 )
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	db.CreateTable()
 }
 
 type JankenService struct {
