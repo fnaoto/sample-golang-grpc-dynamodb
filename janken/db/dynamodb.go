@@ -9,10 +9,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-func CreateTable() {
+func CreateTable(tableName string) {
 	dynamodbEndpoint := "http://dynamodb:8000"
 	dynamodbRegion := "ap-northeast-1"
-	dynamodbTableName := "table"
 
 	awsSession, err := session.NewSession(&aws.Config{
 		Endpoint: aws.String(dynamodbEndpoint),
@@ -42,7 +41,7 @@ func CreateTable() {
 			ReadCapacityUnits:  aws.Int64(1),
 			WriteCapacityUnits: aws.Int64(1),
 		},
-		TableName: aws.String(dynamodbTableName),
+		TableName: aws.String(tableName),
 	}
 
 	resp, err := ddb.CreateTable(params)

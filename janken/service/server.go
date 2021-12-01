@@ -16,7 +16,7 @@ import (
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	db.CreateTable()
+	db.CreateTable("table")
 }
 
 type JankenService struct {
