@@ -24,6 +24,15 @@ func CreateTable(tableName string) {
 
 	ddb := dynamodb.New(awsSession, aws.NewConfig())
 
+	describeTable, err := ddb.DescribeTable(&dynamodb.DescribeTableInput{
+		TableName: aws.String(tableName),
+	})
+
+	if describeTable.Table != nil || err != nil {
+		fmt.Println(describeTable.Table)
+		return
+	}
+
 	params := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
