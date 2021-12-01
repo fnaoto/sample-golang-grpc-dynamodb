@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package janken;
+
+option go_package = "./pb";
+
+import "google/protobuf/timestamp.proto";
+
+service JankenService {
+  rpc PlayJanken (PlayJankenRequest) returns (PlayJankenResponse) {}
+  rpc PlayJankenResults (PlayResultRequest) returns (PlayResultResponse) {}
+}
+
+enum Hands {
+  UNKNOWN_HANDS = 0;
+  CHOKI = 1;
+  PA = 2;
+  GU = 3;
+}
+
+enum Result {
+  UNKNOWN_RESULT = 0;
+  WIN  = 1;
+  LOSE  = 2;
+  DRAW  = 3;
+}
+
+message JankenResult {
+  Hands myHand = 1;
+  Hands yourHand = 2;
+  Result result = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message Report {
+  int32 tryGames = 1;
+  int32 wins = 2;
+  repeated JankenResult jankenResults = 3;
+}
+
+message PlayJankenRequest {
+  Hands hands = 1;
+}
+
+message PlayJankenResponse {
+  JankenResult jankenResult = 1;
+}
+
+message PlayResultRequest {}
+
+message PlayResultResponse {
+  Report report = 1;
+}
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
