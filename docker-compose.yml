@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  api:
+    container_name: api
+    build: .
+    ports:
+      - 50051:50051
+    volumes:
+      - ./janken:/go/src/janken
