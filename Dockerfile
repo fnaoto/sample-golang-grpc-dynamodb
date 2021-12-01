@@ -1,6 +1,7 @@
 FROM golang:1.17.2
 
-COPY janken /go/src/janken/
+COPY janken/proto /go/src/janken/proto
+ADD janken/go.*  /go/src/janken
 
 WORKDIR /go/src/janken/
 
