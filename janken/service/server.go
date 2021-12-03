@@ -61,7 +61,7 @@ func NewJankenService() *JankenService {
 
 func (s *JankenService) PlayJanken(ctx context.Context, req *pb.PlayJankenRequest) (*pb.PlayJankenResponse, error) {
 	if req.Hands == pb.Hands_UNKNOWN_HANDS {
-		return nil, status.Errorf(codes.InvalidArgument, "Choose Rock, Paper, or Scissors.")
+		return nil, status.Errorf(codes.InvalidArgument, "Choose GU, PA, or CHOKI.")
 	}
 
 	yourHand := pkg.EncodeHands(int32(rand.Intn(3) + 1))
@@ -99,7 +99,6 @@ func (s *JankenService) PlayJanken(ctx context.Context, req *pb.PlayJankenReques
 }
 
 func (s *JankenService) PlayJankenResults(ctx context.Context, req *pb.PlayResultRequest) (*pb.PlayResultResponse, error) {
-
 	return &pb.PlayResultResponse{
 		Report: &pb.Report{
 			TryGames:      s.tryGames,
