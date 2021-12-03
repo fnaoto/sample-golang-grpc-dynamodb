@@ -26,10 +26,11 @@ enum Result {
 }
 
 message JankenResult {
-  Hands myHand = 1;
-  Hands computerHand = 2;
-  Result result = 3;
-  google.protobuf.Timestamp created_at = 4;
+  int32 id = 1;
+  Hands myHand = 2;
+  Hands computerHand = 3;
+  Result result = 4;
+  google.protobuf.Timestamp created_at = 5;
 }
 
 message Report {

@@ -16,7 +16,7 @@ import (
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	db.CreateTable()
+	db.Init()
 }
 
 type JankenService struct {
@@ -52,6 +52,7 @@ func (s *JankenService) PlayJanken(ctx context.Context, req *pb.PlayJankenReques
 	now := time.Now()
 
 	jankenResult := &pb.JankenResult{
+		Id:           int32(now.Nanosecond()),
 		MyHand:       req.Hands,
 		ComputerHand: computerHand,
 		Result:       result,
@@ -66,6 +67,8 @@ func (s *JankenService) PlayJanken(ctx context.Context, req *pb.PlayJankenReques
 		s.wins = s.wins + 1
 	}
 	s.jankenResults = append(s.jankenResults, jankenResult)
+
+	db.PutItem(jankenResult)
 
 	return &pb.PlayJankenResponse{
 		JankenResult: jankenResult,

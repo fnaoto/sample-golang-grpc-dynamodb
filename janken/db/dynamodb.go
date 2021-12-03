@@ -2,11 +2,13 @@ package db
 
 import (
 	"fmt"
+	"janken/pb"
 	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
 type DynamoDBConfig struct {
@@ -16,7 +18,7 @@ type DynamoDBConfig struct {
 
 var ddbc = &DynamoDBConfig{}
 
-func init() {
+func Init() {
 	dynamodbEndpoint := "http://dynamodb:8000"
 	dynamodbRegion := "ap-northeast-1"
 	dynamodbTable := "table"
@@ -34,6 +36,27 @@ func init() {
 		Client: dynamodb.New(awsSession, aws.NewConfig()),
 		Table:  dynamodbTable,
 	}
+
+	CreateTable()
+}
+
+func PutItem(item *pb.JankenResult) {
+	av, err := dynamodbattribute.MarshalMap(item)
+
+	if err != nil {
+		log.Fatalf("dynamodbattribute: %s", err)
+	}
+
+	log.Print(av)
+
+	_, err = ddbc.Client.PutItem(&dynamodb.PutItemInput{
+		TableName: aws.String(ddbc.Table),
+		Item:      av,
+	})
+
+	if err != nil {
+		log.Fatalf("Got error calling PutItem: %s", err)
+	}
 }
 
 func ListTables() []*string {
@@ -46,27 +69,27 @@ func ListTables() []*string {
 	return resp.TableNames
 }
 
-func DescribeTable() *dynamodb.TableDescription {
+func DescribeTable() (*dynamodb.DescribeTableOutput, error) {
 	resp, err := ddbc.Client.DescribeTable(&dynamodb.DescribeTableInput{
 		TableName: &ddbc.Table,
 	})
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return resp.Table
+	return resp, err
 }
 
 func CreateTable() {
-	describeTable := DescribeTable
-	fmt.Println(&describeTable)
+	describeTable, err := DescribeTable()
+
+	if describeTable != nil && err == nil {
+		log.Printf("Already exists: %s", describeTable.Table)
+		return
+	}
 
 	params := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
 				AttributeName: aws.String("id"),
-				AttributeType: aws.String("S"),
+				AttributeType: aws.String("N"),
 			},
 		},
 		KeySchema: []*dynamodb.KeySchemaElement{
