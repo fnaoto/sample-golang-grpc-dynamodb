@@ -27,7 +27,7 @@ enum Result {
 
 message JankenResult {
   Hands myHand = 1;
-  Hands yourHand = 2;
+  Hands computerHand = 2;
   Result result = 3;
   google.protobuf.Timestamp created_at = 4;
 }

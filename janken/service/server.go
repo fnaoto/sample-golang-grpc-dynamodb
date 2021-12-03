@@ -64,12 +64,12 @@ func (s *JankenService) PlayJanken(ctx context.Context, req *pb.PlayJankenReques
 		return nil, status.Errorf(codes.InvalidArgument, "Choose GU, PA, or CHOKI.")
 	}
 
-	yourHand := pkg.EncodeHands(int32(rand.Intn(3) + 1))
+	computerHand := pkg.EncodeHands(int32(rand.Intn(3) + 1))
 
 	var result pb.Result
-	if req.Hands == yourHand {
+	if req.Hands == computerHand {
 		result = pb.Result_DRAW
-	} else if (req.Hands.Number()-yourHand.Number()+3)%3 == 1 {
+	} else if (req.Hands.Number()-computerHand.Number()+3)%3 == 1 {
 		result = pb.Result_WIN
 	} else {
 		result = pb.Result_LOSE
@@ -78,9 +78,9 @@ func (s *JankenService) PlayJanken(ctx context.Context, req *pb.PlayJankenReques
 	now := time.Now()
 
 	jankenResult := &pb.JankenResult{
-		MyHand:   req.Hands,
-		YourHand: yourHand,
-		Result:   result,
+		MyHand:       req.Hands,
+		ComputerHand: computerHand,
+		Result:       result,
 		CreatedAt: &timestamppb.Timestamp{
 			Seconds: now.Unix(),
 			Nanos:   int32(now.Nanosecond()),
