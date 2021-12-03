@@ -9,14 +9,14 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	db "janken/db"
-	pb "janken/pb"
-	pkg "janken/pkg"
+	"janken/db"
+	"janken/pb"
+	"janken/pkg"
 )
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	db.CreateTable("table")
+	db.Init()
 }
 
 type JankenService struct {
@@ -35,15 +35,15 @@ func NewJankenService() *JankenService {
 
 func (s *JankenService) PlayJanken(ctx context.Context, req *pb.PlayJankenRequest) (*pb.PlayJankenResponse, error) {
 	if req.Hands == pb.Hands_UNKNOWN_HANDS {
-		return nil, status.Errorf(codes.InvalidArgument, "Choose Rock, Paper, or Scissors.")
+		return nil, status.Errorf(codes.InvalidArgument, "Choose GU, PA, or CHOKI.")
 	}
 
-	yourHand := pkg.EncodeHands(int32(rand.Intn(3) + 1))
+	computerHand := pkg.EncodeHands(int32(rand.Intn(3) + 1))
 
 	var result pb.Result
-	if req.Hands == yourHand {
+	if req.Hands == computerHand {
 		result = pb.Result_DRAW
-	} else if (req.Hands.Number()-yourHand.Number()+3)%3 == 1 {
+	} else if (req.Hands.Number()-computerHand.Number()+3)%3 == 1 {
 		result = pb.Result_WIN
 	} else {
 		result = pb.Result_LOSE
@@ -52,9 +52,10 @@ func (s *JankenService) PlayJanken(ctx context.Context, req *pb.PlayJankenReques
 	now := time.Now()
 
 	jankenResult := &pb.JankenResult{
-		MyHand:   req.Hands,
-		YourHand: yourHand,
-		Result:   result,
+		Id:           int32(now.Nanosecond()),
+		MyHand:       req.Hands,
+		ComputerHand: computerHand,
+		Result:       result,
 		CreatedAt: &timestamppb.Timestamp{
 			Seconds: now.Unix(),
 			Nanos:   int32(now.Nanosecond()),
@@ -67,13 +68,14 @@ func (s *JankenService) PlayJanken(ctx context.Context, req *pb.PlayJankenReques
 	}
 	s.jankenResults = append(s.jankenResults, jankenResult)
 
+	db.PutItem(jankenResult)
+
 	return &pb.PlayJankenResponse{
 		JankenResult: jankenResult,
 	}, nil
 }
 
 func (s *JankenService) PlayJankenResults(ctx context.Context, req *pb.PlayResultRequest) (*pb.PlayResultResponse, error) {
-
 	return &pb.PlayResultResponse{
 		Report: &pb.Report{
 			TryGames:      s.tryGames,
