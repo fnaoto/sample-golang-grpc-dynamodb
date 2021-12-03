@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
 
 type DynamoDBConfig struct {
@@ -40,14 +41,41 @@ func Init() {
 	CreateTable()
 }
 
+func Scan() []*pb.JankenResult {
+	filt := expression.Name("created_at").AttributeExists()
+	expr, err := expression.NewBuilder().WithFilter(filt).Build()
+
+	if err != nil {
+		log.Fatalf("expression.NewBuilder: %s", err)
+	}
+
+	resp, err := ddbc.Client.Scan(&dynamodb.ScanInput{
+		TableName:                 aws.String(ddbc.Table),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		ProjectionExpression:      expr.Projection(),
+	})
+
+	if err != nil {
+		log.Fatalf("Scan: %s", err)
+	}
+
+	var recs []*pb.JankenResult
+
+	if err := dynamodbattribute.UnmarshalListOfMaps(resp.Items, &recs); err != nil {
+		log.Fatalf("UnmarshalListOfMaps: %s", err)
+	}
+
+	return recs
+}
+
 func PutItem(item *pb.JankenResult) {
 	av, err := dynamodbattribute.MarshalMap(item)
 
 	if err != nil {
 		log.Fatalf("dynamodbattribute: %s", err)
 	}
-
-	log.Print(av)
 
 	_, err = ddbc.Client.PutItem(&dynamodb.PutItemInput{
 		TableName: aws.String(ddbc.Table),
@@ -63,7 +91,7 @@ func ListTables() []*string {
 	resp, err := ddbc.Client.ListTables(&dynamodb.ListTablesInput{})
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("ListTables: %s", err)
 	}
 
 	return resp.TableNames

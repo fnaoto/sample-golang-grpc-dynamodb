@@ -66,7 +66,6 @@ func (s *JankenService) PlayJanken(ctx context.Context, req *pb.PlayJankenReques
 	if result == pb.Result_WIN {
 		s.wins = s.wins + 1
 	}
-	s.jankenResults = append(s.jankenResults, jankenResult)
 
 	db.PutItem(jankenResult)
 
@@ -76,11 +75,12 @@ func (s *JankenService) PlayJanken(ctx context.Context, req *pb.PlayJankenReques
 }
 
 func (s *JankenService) PlayJankenResults(ctx context.Context, req *pb.PlayResultRequest) (*pb.PlayResultResponse, error) {
+	jankenResults := db.Scan()
 	return &pb.PlayResultResponse{
 		Report: &pb.Report{
 			TryGames:      s.tryGames,
 			Wins:          s.wins,
-			JankenResults: s.jankenResults,
+			JankenResults: jankenResults,
 		},
 	}, nil
 }
