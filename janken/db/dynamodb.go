@@ -5,33 +5,39 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-func CreateTable(tableName string) {
-	dynamodbEndpoint := "http://dynamodb:8000"
-	dynamodbRegion := "ap-northeast-1"
+type DynamoDBConfig struct {
+	Client *dynamodb.DynamoDB
+	Table  string
+}
 
-	awsSession, err := session.NewSession(&aws.Config{
-		Endpoint: aws.String(dynamodbEndpoint),
-		Region:   aws.String(dynamodbRegion),
+func (ddbr *DynamoDBConfig) ListTables() []*string {
+	resp, err := ddbr.Client.ListTables(&dynamodb.ListTablesInput{})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return resp.TableNames
+}
+
+func (ddbr *DynamoDBConfig) DescribeTable() *dynamodb.TableDescription {
+	resp, err := ddbr.Client.DescribeTable(&dynamodb.DescribeTableInput{
+		TableName: &ddbr.Table,
 	})
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ddb := dynamodb.New(awsSession, aws.NewConfig())
+	return resp.Table
+}
 
-	describeTable, err := ddb.DescribeTable(&dynamodb.DescribeTableInput{
-		TableName: aws.String(tableName),
-	})
-
-	if describeTable.Table != nil || err != nil {
-		fmt.Println(describeTable.Table)
-		return
-	}
+func (ddbr *DynamoDBConfig) CreateTable() {
+	describeTable := ddbr.DescribeTable
+	fmt.Println(&describeTable)
 
 	params := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
@@ -50,10 +56,10 @@ func CreateTable(tableName string) {
 			ReadCapacityUnits:  aws.Int64(1),
 			WriteCapacityUnits: aws.Int64(1),
 		},
-		TableName: aws.String(tableName),
+		TableName: aws.String(ddbr.Table),
 	}
 
-	resp, err := ddb.CreateTable(params)
+	resp, err := ddbr.Client.CreateTable(params)
 
 	if err != nil {
 		log.Fatal(err)

@@ -2,21 +2,47 @@ package service
 
 import (
 	"context"
+	"log"
 	"math/rand"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	db "janken/db"
+	"janken/db"
 	pb "janken/pb"
 	pkg "janken/pkg"
 )
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	db.CreateTable("table")
+	dynamodbService()
+}
+
+func dynamodbService() {
+	dynamodbEndpoint := "http://dynamodb:8000"
+	dynamodbRegion := "ap-northeast-1"
+	dynamodbTable := "table"
+
+	awsSession, err := session.NewSession(&aws.Config{
+		Endpoint: aws.String(dynamodbEndpoint),
+		Region:   aws.String(dynamodbRegion),
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ddbr := &db.DynamoDBConfig{
+		Client: dynamodb.New(awsSession, aws.NewConfig()),
+		Table:  dynamodbTable,
+	}
+
+	ddbr.CreateTable()
 }
 
 type JankenService struct {
