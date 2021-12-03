@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
@@ -13,8 +14,30 @@ type DynamoDBConfig struct {
 	Table  string
 }
 
-func (ddbr *DynamoDBConfig) ListTables() []*string {
-	resp, err := ddbr.Client.ListTables(&dynamodb.ListTablesInput{})
+var ddbc = &DynamoDBConfig{}
+
+func init() {
+	dynamodbEndpoint := "http://dynamodb:8000"
+	dynamodbRegion := "ap-northeast-1"
+	dynamodbTable := "table"
+
+	awsSession, err := session.NewSession(&aws.Config{
+		Endpoint: aws.String(dynamodbEndpoint),
+		Region:   aws.String(dynamodbRegion),
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ddbc = &DynamoDBConfig{
+		Client: dynamodb.New(awsSession, aws.NewConfig()),
+		Table:  dynamodbTable,
+	}
+}
+
+func ListTables() []*string {
+	resp, err := ddbc.Client.ListTables(&dynamodb.ListTablesInput{})
 
 	if err != nil {
 		log.Fatal(err)
@@ -23,9 +46,9 @@ func (ddbr *DynamoDBConfig) ListTables() []*string {
 	return resp.TableNames
 }
 
-func (ddbr *DynamoDBConfig) DescribeTable() *dynamodb.TableDescription {
-	resp, err := ddbr.Client.DescribeTable(&dynamodb.DescribeTableInput{
-		TableName: &ddbr.Table,
+func DescribeTable() *dynamodb.TableDescription {
+	resp, err := ddbc.Client.DescribeTable(&dynamodb.DescribeTableInput{
+		TableName: &ddbc.Table,
 	})
 
 	if err != nil {
@@ -35,8 +58,8 @@ func (ddbr *DynamoDBConfig) DescribeTable() *dynamodb.TableDescription {
 	return resp.Table
 }
 
-func (ddbr *DynamoDBConfig) CreateTable() {
-	describeTable := ddbr.DescribeTable
+func CreateTable() {
+	describeTable := DescribeTable
 	fmt.Println(&describeTable)
 
 	params := &dynamodb.CreateTableInput{
@@ -56,10 +79,10 @@ func (ddbr *DynamoDBConfig) CreateTable() {
 			ReadCapacityUnits:  aws.Int64(1),
 			WriteCapacityUnits: aws.Int64(1),
 		},
-		TableName: aws.String(ddbr.Table),
+		TableName: aws.String(ddbc.Table),
 	}
 
-	resp, err := ddbr.Client.CreateTable(params)
+	resp, err := ddbc.Client.CreateTable(params)
 
 	if err != nil {
 		log.Fatal(err)
